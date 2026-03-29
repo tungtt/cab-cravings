@@ -25,6 +25,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.cabvenv
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -205,3 +206,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+.DS_Store
+
+# Raw data (large TLC + Yelp downloads)
+data/raw/
+
+CLAUDE.md
+.claude/
+docs/
