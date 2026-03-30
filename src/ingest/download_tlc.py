@@ -4,7 +4,7 @@ Download NYC TLC trip record parquet files from the TLC CloudFront CDN.
 Usage:
     python -m src.ingest.download_tlc --from-year 2022 --to-year 2023
     python -m src.ingest.download_tlc --from-year 2023 --to-year 2023 --from-month 6 --to-month 9
-    python -m src.ingest.download_tlc --from-year 2022 --to-year 2023 --types yellow
+    python -m src.ingest.download_tlc --from-year 2022 --to-year 2023 --types yellow green
 """
 
 import argparse
@@ -15,7 +15,7 @@ from pathlib import Path
 
 BASE_URL = "https://d37ci6vzurychx.cloudfront.net/trip-data"
 # DEFAULT_TYPES = ["yellow", "green", "fhv", "fhvhv"]
-DEFAULT_TYPES = ["yellow", "green"]  # fhv is excluded due to sparse data (low drop-off)
+DEFAULT_TYPES = ["fhvhv"]  # fhv is excluded due to sparse data (low drop-off)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "raw" / "tlc_trips"
 
@@ -120,7 +120,7 @@ def _parse_args(argv=None):
         "--types",
         nargs="+",
         default=DEFAULT_TYPES,
-        # choices=["yellow", "green", "fhv", "fhvhv"],
+        choices=["yellow", "green", "fhv", "fhvhv"],
         metavar="TYPE",
         help="Taxi types to download (yellow, green, fhv, fhvhv)",
     )

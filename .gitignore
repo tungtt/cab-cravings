@@ -210,7 +210,7 @@ __marimo__/
 .DS_Store
 
 # Raw data (large TLC + Yelp downloads)
-data/raw/
+data/raw/tlc_trips/
 
 CLAUDE.md
 .claude/
