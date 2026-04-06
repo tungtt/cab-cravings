@@ -211,7 +211,11 @@ __marimo__/
 
 # Raw data (large TLC + Yelp downloads)
 data/raw/tlc_trips/
+data/raw/yelp/
 
 CLAUDE.md
-.claude/
+.claude/agents/
+.claude/skills
+.claude/settings.local.json
 docs/
+.kaggle/

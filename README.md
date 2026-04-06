@@ -126,3 +126,45 @@ Optional flags:
 | `--output-dir` | `data/raw/tlc_trips` | Override output directory |
 
 Files are saved as parquet to `data/raw/tlc_trips/` and skipped if already downloaded.
+
+## Downloading Yelp data
+
+### Kaggle credentials
+
+The Yelp Open Dataset is sourced from Kaggle. You need a free Kaggle account and API credentials.
+
+1. Sign in at [kaggle.com](https://www.kaggle.com) → Account → API → **Create New Token**
+2. Create `kaggle.json` in `.kaggle` and restrict permissions:
+   ```json
+   {"username":"your_username","key":"your_api_key"}
+   ```
+
+   ```bash
+   chmod 600 .kaggle/kaggle.json
+   ```
+3. Tell the kaggle library where to find the credentials by adding this to your shell profile (`~/.zshrc` or `~/.bashrc`):
+   ```bash
+   export KAGGLE_CONFIG_DIR=.kaggle/
+   ```
+   Then reload: `source ~/.zshrc`
+
+   Alternatively, export credentials directly as environment variables:
+   ```bash
+   export KAGGLE_USERNAME=your_username
+   export KAGGLE_KEY=your_api_key
+   ```
+
+### Download
+
+```bash
+python -m src.ingest.download_yelp
+```
+
+Optional flags:
+
+| Flag | Default | Description |
+|---|---|---|
+| `--output-dir` | `data/raw/yelp` | Override output directory |
+| `--force` | off | Re-download even if all files already exist |
+
+The five NDJSON files (~9 GB uncompressed) are extracted to `data/raw/yelp/` and skipped if already present.

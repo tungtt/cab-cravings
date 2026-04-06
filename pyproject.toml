@@ -13,6 +13,7 @@ dependencies = [
     "lightgbm",
     "scipy",
     "pyarrow",
+    "kaggle>=2.0",
 ]
 
 [project.optional-dependencies]
