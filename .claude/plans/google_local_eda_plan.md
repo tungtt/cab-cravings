@@ -45,7 +45,7 @@ The `state` field is not a US state code. Geographic filtering must use `latitud
 
 ## File Loading Strategy
 
-Both files are gzipped NDJSON. Use `pd.read_json(path, lines=True, chunksize=50_000, compression="gzip")` for streaming. The metadata file (272,189 businesses, all of New York state) is small enough to load in full and filter once in memory. The review file (18,661,975 rows) must be streamed in chunks. The NYC restaurant `gmap_id` set materialised in Task 1 gates all downstream review reads.
+Both files are gzipped NDJSON. Use `pd.read_json(path, lines=True, chunksize=500_000, compression="gzip")` for streaming. The metadata file (272,189 businesses, all of New York state) is small enough to load in full and filter once in memory. The review file (18,661,975 rows) must be streamed in chunks. The NYC restaurant `gmap_id` set materialised in Task 1 gates all downstream review reads.
 
 ## Phase 1: Foundation
 
@@ -90,7 +90,7 @@ Both files are gzipped NDJSON. Use `pd.read_json(path, lines=True, chunksize=50_
 
 ### Task 3 - Temporal Coverage and TLC Alignment
 
-**Objective:** Determine the review date range and document the temporal gap with TLC trip data (Jan 2025 - Feb 2026).
+**Objective:** Determine the review date range, document the temporal gap with TLC trip data, and establish the TLC download window and train/val/test split.
 
 **Inputs:** `review-New_York_10.json.gz` filtered to NYC restaurant `gmap_id`s.
 
@@ -98,10 +98,26 @@ Both files are gzipped NDJSON. Use `pd.read_json(path, lines=True, chunksize=50_
 - Convert `time` (unix ms) to datetime: `pd.to_datetime(df["time"], unit="ms")`
 - Plot review volume by year and by month-year (last 5 years)
 - Report: earliest review, latest review, peak year, share of reviews by year
+- Compute 2018+ share; use as anchor for TLC download window decision
 - Count unique users with at least one NYC restaurant review after 2018
 - Document the gap: Google data cuts off Sep 2021; TLC window starts Jan 2025 (roughly 3.5 years). Must appear in the final report. The synthetic identity layer absorbs this gap by construction.
+- Document train/val/test temporal boundaries (see Output)
 
 **Output:** Review timeline chart. Year-over-year table. Written temporal gap assessment.
+
+**TLC download decision:** Download yellow + green + FHVHV trips, Jan 2019 - Sep 2021. 72.6% of all reviews fall in 2018-2020 (peak 2019: 32.0%); taxi mobility signals from the same era as ground-truth reviews are more predictive than trips 4 years later. The existing 2025-2026 TLC data is valid for cold-start inference only.
+
+**Train/val/test split:**
+
+| Split | Reviews | TLC trips | Share of reviews |
+|---|---|---|---|
+| Train | 2019 Jan - 2020 Dec | 2019 Jan - 2020 Dec | 45.7% |
+| Validation | 2021 Jan - Jun | 2021 Jan - Jun | ~2-3% |
+| Test | 2021 Jul - Sep | 2021 Jul - Sep | ~2% |
+
+Pre-2019 reviews feed the interaction matrix as static prior history but are not training examples for the ranking model. Users with fewer than 5 total reviews are excluded from NDCG evaluation.
+
+**COVID note:** 2020 shows a 57.2% review drop vs 2019 (real signal, not artifact). Flag a 2018-2019 train-only ablation in Epic 3 to test whether excluding the COVID year improves validation NDCG.
 
 **Decision gate:** If fewer than 50% of reviews are from 2018 or later, flag data recency risk.
 
@@ -115,8 +131,10 @@ Both files are gzipped NDJSON. Use `pd.read_json(path, lines=True, chunksize=50_
 
 **Note:** The 10-core guarantee applies to the full New York state dataset. After filtering to NYC restaurants only, some users may fall below 10 reviews.
 
+**Note:** Total reviews (4,986,344), unique users (405,662), and unique restaurants (27,539) are already produced by the Task 2-3 streaming pass. Reuse those variables; do not trigger a second streaming pass.
+
 **Analysis steps:**
-- Count: total reviews, unique users, unique restaurants
+- Reuse streaming-pass counts: total reviews, unique users, unique restaurants
 - Compute matrix sparsity: `1 - (n_reviews / (n_users x n_restaurants))`
 - Plot reviews-per-user and reviews-per-restaurant distributions (log scale)
 - Report: fraction of users with >=5, >=10, >=20 NYC reviews post-corpus-filter
@@ -148,9 +166,10 @@ Both files are gzipped NDJSON. Use `pd.read_json(path, lines=True, chunksize=50_
 
 **Inputs:** NYC restaurant metadata subset (Task 1).
 
+**Note:** Task 1 already produces `cat_series` (3,269 distinct tags, ranked by count). Reuse it directly; do not re-explode the category list.
+
 **Analysis steps:**
-- Explode the `category` list; count tag frequencies
-- Report top-30 tags; propose cuisine bucketing scheme (15-20 buckets)
+- Reuse `cat_series` from Task 1; propose cuisine bucketing scheme (15-20 buckets)
 - Report `price` distribution: "$", "$$", "$$$", "$$$$" value counts and null rate
 - Cross-tabulate price tier vs. top cuisine buckets
 
@@ -196,12 +215,14 @@ Both files are gzipped NDJSON. Use `pd.read_json(path, lines=True, chunksize=50_
 
 **Inputs:** Reviews filtered to NYC restaurants.
 
+**Note:** Monthly volume is already plotted in Task 3 (last 5 years). Task 9 focuses on sub-day and day-of-week patterns only.
+
 **Analysis steps:**
 - Convert `time` (unix ms) to America/New_York local time
-- Plot review count by hour-of-day, day-of-week, and month
+- Plot review count by hour-of-day and day-of-week
 - Overlay TLC dinner-dropoff window (17-21h) on the hour-of-day chart
 
-**Output:** Three temporal distribution charts. Alignment note vs. TLC dinner-dropoff peak.
+**Output:** Two temporal distribution charts. Alignment note vs. TLC dinner-dropoff peak.
 
 ### Task 10 - Per-User Dining Geography
 

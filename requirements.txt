@@ -4,6 +4,7 @@ scikit-learn==1.5.2
 lightgbm==4.5.0
 scipy==1.14.1
 kaggle==2.0.0
-nbformat
-matplotlib
-seaborn
+nbformat==5.10.4
+matplotlib==3.10.8
+seaborn==0.13.2
+geopandas==1.1.3
